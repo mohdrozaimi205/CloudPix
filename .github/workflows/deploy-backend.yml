@@ -64,7 +64,7 @@ jobs:
 
       - name: Push migrasi database
         working-directory: backend
-        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}" --include-all
+        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}" --include-all --yes
 
       - name: Set secrets Edge Functions
         working-directory: backend
