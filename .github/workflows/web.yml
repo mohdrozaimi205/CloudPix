@@ -1,0 +1,77 @@
+name: Deploy Web App
+
+# Bina web app dan terbitkan ke GitHub Pages (percuma).
+# Jika secrets CLOUDFLARE_API_TOKEN & CLOUDFLARE_ACCOUNT_ID diisi, juga deploy ke Cloudflare Pages.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Bina
+        working-directory: web
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npm ci
+          npm run build
+          cp dist/index.html dist/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  github-pages:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  cloudflare-pages:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Langkau jika tiada kunci Cloudflare
+        if: env.CF_TOKEN == ''
+        run: echo "Cloudflare Pages dilangkau (secrets belum diisi)."
+      - uses: actions/download-artifact@v4
+        if: env.CF_TOKEN != ''
+        with:
+          name: github-pages
+          path: artifact
+      - name: Buka artifact
+        if: env.CF_TOKEN != ''
+        run: mkdir dist && tar -xf artifact/artifact.tar -C dist
+      - uses: cloudflare/wrangler-action@v3
+        if: env.CF_TOKEN != ''
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=cloudpix

@@ -1,0 +1,94 @@
+name: Deploy Backend (Supabase)
+
+# Deploy database + Edge Functions secara automatik. Anda TIDAK perlu terminal.
+# Jalan bila fail backend/database berubah, atau tekan "Run workflow" di tab Actions.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "database/migrations/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check & lint Edge Functions
+        working-directory: backend/supabase/functions
+        run: |
+          deno lint
+          for f in */index.ts; do deno check "$f"; done
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Semak secrets wujud
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          missing=0
+          for v in SUPABASE_ACCESS_TOKEN PROJECT_REF DB_URL R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET CRON_SECRET; do
+            if [ -z "${!v}" ]; then echo "::error::GitHub Secret untuk $v belum diisi"; missing=1; fi
+          done
+          exit $missing
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Sediakan migrasi
+        run: |
+          mkdir -p backend/supabase/migrations
+          cp database/migrations/*.sql backend/supabase/migrations/
+
+      - name: Push migrasi database
+        working-directory: backend
+        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}" --include-all
+
+      - name: Set secrets Edge Functions
+        working-directory: backend
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PUBLIC_WEB_URL: ${{ vars.PUBLIC_WEB_URL }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+        run: |
+          {
+            echo "R2_ACCOUNT_ID=$R2_ACCOUNT_ID"
+            echo "R2_ACCESS_KEY_ID=$R2_ACCESS_KEY_ID"
+            echo "R2_SECRET_ACCESS_KEY=$R2_SECRET_ACCESS_KEY"
+            echo "R2_BUCKET=$R2_BUCKET"
+            echo "CRON_SECRET=$CRON_SECRET"
+            [ -n "$PUBLIC_WEB_URL" ] && echo "PUBLIC_WEB_URL=$PUBLIC_WEB_URL"
+            [ -n "$ALLOWED_ORIGINS" ] && echo "ALLOWED_ORIGINS=$ALLOWED_ORIGINS"
+          } > /tmp/fn.env
+          supabase secrets set --project-ref "$PROJECT_REF" --env-file /tmp/fn.env
+          rm -f /tmp/fn.env
+
+      - name: Deploy Edge Functions
+        working-directory: backend
+        run: supabase functions deploy --project-ref "$PROJECT_REF"

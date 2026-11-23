@@ -1,0 +1,40 @@
+# Rahsia — JANGAN commit
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+keystore.properties
+local.properties
+google-services.json
+*-KUNCI/
+
+# Supabase (migrasi disalin automatik oleh workflow)
+backend/supabase/migrations/
+backend/supabase/.temp/
+backend/supabase/.branches/
+
+# Web
+node_modules/
+web/dist/
+.wrangler/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+android/captures/
+*.apk
+*.aab
+*.iml
+
+# Media — fail sebenar disimpan dalam R2, bukan GitHub
+*.mp4
+*.mov
+*.mkv
+*.heic
+
+# OS
+.DS_Store
+Thumbs.db

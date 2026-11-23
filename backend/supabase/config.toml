@@ -1,0 +1,31 @@
+# Konfigurasi Supabase CLI untuk CloudPix (digunakan oleh GitHub Actions).
+project_id = "cloudpix"
+
+[functions.upload-init]
+verify_jwt = true
+
+[functions.upload-multipart]
+verify_jwt = true
+
+[functions.upload-complete]
+verify_jwt = true
+
+[functions.media-url]
+verify_jwt = true
+
+[functions.media-delete]
+verify_jwt = true
+
+[functions.share-create]
+verify_jwt = true
+
+[functions.export-data]
+verify_jwt = true
+
+# Awam: dibuka oleh sesiapa yang ada pautan kongsi (dilindungi token + rate limit)
+[functions.share-public]
+verify_jwt = false
+
+# Dipanggil oleh pg_cron (dilindungi x-cron-secret)
+[functions.purge-trash]
+verify_jwt = false
