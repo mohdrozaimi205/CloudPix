@@ -79,13 +79,16 @@ class UploadWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx
                 }
             }
             Graph.bump()
+            Graph.prefs.setUploadError(id.toString(), f.name, null)
             Result.success(workDataOf("name" to f.name, "duplicate" to (r is UploadResult.Duplicate)))
         } catch (e: ApiException) {
+            Graph.prefs.setUploadError(id.toString(), f.name, e.message)
             if (e.transient && runAttemptCount < 6) Result.retry()
             else Result.failure(workDataOf("name" to f.name, "error" to (e.message ?: "Gagal")))
         } catch (e: SecurityException) {
             Result.failure(workDataOf("name" to f.name, "error" to "Tiada kebenaran membaca fail"))
         } catch (e: Exception) {
+            Graph.prefs.setUploadError(id.toString(), f.name, e.message ?: e.javaClass.simpleName)
             if (runAttemptCount < 3) Result.retry() else Result.failure(workDataOf("name" to f.name, "error" to (e.message ?: "Gagal")))
         }
     }

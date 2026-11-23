@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -166,6 +167,7 @@ private fun StatTile(icon: ImageVector, value: String, label: String, brush: Bru
 
 @Composable
 private fun UploadQueueCard(works: List<WorkInfo>, onClear: () -> Unit) {
+    val ctx = LocalContext.current
     val running = works.count { !it.state.isFinished }
     GlassCard(Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -173,7 +175,8 @@ private fun UploadQueueCard(works: List<WorkInfo>, onClear: () -> Unit) {
             if (running == 0) TextButton(onClick = onClear) { Text("Kosongkan") }
         }
         works.take(8).forEach { w ->
-            val name = w.progress.getString("name") ?: w.outputData.getString("name") ?: "Fail"
+            val lastErr = Graph.prefs.uploadError(w.id.toString())
+            val name = w.progress.getString("name") ?: w.outputData.getString("name") ?: lastErr?.first ?: "Fail"
             val sent = w.progress.getLong("sent", 0)
             val total = w.progress.getLong("total", 0)
             Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -187,13 +190,18 @@ private fun UploadQueueCard(works: List<WorkInfo>, onClear: () -> Unit) {
                     val status = when (w.state) {
                         WorkInfo.State.SUCCEEDED -> if (w.outputData.getBoolean("duplicate", false)) "Sudah wujud (duplikat)" else "Siap"
                         WorkInfo.State.FAILED -> w.outputData.getString("error") ?: "Gagal"
-                        WorkInfo.State.ENQUEUED -> if (w.runAttemptCount > 0) "Menunggu sambungan, akan cuba semula…" else "Menunggu"
+                        WorkInfo.State.ENQUEUED -> if (w.runAttemptCount > 0) "Cuba semula (${w.runAttemptCount}): ${lastErr?.second ?: "menunggu sambungan"}" else "Menunggu"
                         WorkInfo.State.BLOCKED -> "Menunggu"
                         else -> if (total > 0) "${formatBytes(sent)} / ${formatBytes(total)} · ${(sent * 100 / total)}%" else "Menyemak fail…"
                     }
                     Text(status, fontSize = 12.sp, color = if (w.state == WorkInfo.State.FAILED) Danger else MaterialTheme.colorScheme.onSurfaceVariant)
                     if (w.state == WorkInfo.State.RUNNING && total > 0) {
                         LinearProgressIndicator(progress = { (sent.toFloat() / total).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+                    }
+                }
+                if (!w.state.isFinished) {
+                    androidx.compose.material3.IconButton(onClick = { WorkManager.getInstance(ctx).cancelWorkById(w.id) }) {
+                        Icon(androidx.compose.material.icons.Icons.Outlined.Close, "Batal", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

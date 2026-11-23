@@ -58,6 +58,13 @@ class Prefs(ctx: Context) {
         get() = sp.getLong("last_backup", 0)
         set(v) = sp.edit { putLong("last_backup", v) }
 
+    /** Sebab cubaan upload terakhir gagal (dipapar semasa menunggu cuba semula) */
+    fun setUploadError(workId: String, name: String, msg: String?) = sp.edit {
+        if (msg == null) remove("uperr_$workId") else putString("uperr_$workId", "$name\u0000$msg")
+    }
+    fun uploadError(workId: String): Pair<String, String>? =
+        sp.getString("uperr_$workId", null)?.split('\u0000', limit = 2)?.takeIf { it.size == 2 }?.let { it[0] to it[1] }
+
     fun isBackedUp(key: String) = done.contains(key)
     fun markBackedUp(key: String) = done.edit { putBoolean(key, true) }
 }
