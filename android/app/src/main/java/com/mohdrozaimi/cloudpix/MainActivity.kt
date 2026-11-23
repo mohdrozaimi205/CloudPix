@@ -85,6 +85,8 @@ import com.mohdrozaimi.cloudpix.ui.ProfileScreen
 import com.mohdrozaimi.cloudpix.ui.SetupScreen
 import com.mohdrozaimi.cloudpix.ui.StorageScreen
 import com.mohdrozaimi.cloudpix.ui.ViewerScreen
+import com.mohdrozaimi.cloudpix.ui.UpdatePrompt
+import com.mohdrozaimi.cloudpix.ui.NotificationPermission
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -218,6 +220,9 @@ private fun Main(theme: Int, onTheme: (Int) -> Unit, onServerReset: () -> Unit) 
     val route = entry?.destination?.route
     val showBar = route in tabs.map { it.route }
     val openViewer = { nav.navigate("viewer") }
+
+    UpdatePrompt(auto = true)
+    NotificationPermission()
 
     Box(Modifier.fillMaxSize()) {
         NavHost(nav, startDestination = "home", modifier = Modifier.fillMaxSize().then(if (route == "viewer") Modifier else Modifier.statusBarsPadding())) {

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Storage
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -69,6 +70,8 @@ fun ProfileScreen(themeMode: Int, onTheme: (Int) -> Unit, onNavigate: (String) -
     var stats by remember { mutableStateOf(Stats()) }
     var biometric by remember { mutableStateOf(Graph.prefs.biometricLock) }
     var exporting by remember { mutableStateOf<String?>(null) }
+    var checkUpdate by remember { mutableStateOf(false) }
+    if (checkUpdate) UpdatePrompt(auto = false, onDone = { checkUpdate = false })
     val email = remember { runCatching { Graph.client.auth.currentUserOrNull()?.email }.getOrNull() ?: "" }
     LaunchedEffect(refresh) { runCatching { stats = Graph.repo.stats() } }
 
@@ -155,6 +158,8 @@ fun ProfileScreen(themeMode: Int, onTheme: (Int) -> Unit, onNavigate: (String) -
                     }
                 }
                 HorizontalDivider()
+                NavRow(Icons.Outlined.SystemUpdate, "Semak kemas kini", "v${com.mohdrozaimi.cloudpix.work.Updates.currentVersion}") { checkUpdate = true }
+                HorizontalDivider()
                 NavRow(Icons.Outlined.Dns, "Tukar server", Graph.prefs.serverUrl.removePrefix("https://")) {
                     scope.launch {
                         runCatching { Graph.client.auth.signOut() }
@@ -170,7 +175,7 @@ fun ProfileScreen(themeMode: Int, onTheme: (Int) -> Unit, onNavigate: (String) -
                 }
             }
         }
-        item { Text("CloudPix · Android", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(4.dp)) }
+        item { Text("CloudPix · Android v${com.mohdrozaimi.cloudpix.work.Updates.currentVersion}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(4.dp)) }
     }
 }
 

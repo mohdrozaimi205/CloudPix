@@ -29,11 +29,18 @@ class CloudPixApp : Application() {
                 description = "Status upload dan auto-backup CloudPix"
             },
         )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_UPDATE, "Kemas kini app", NotificationManager.IMPORTANCE_DEFAULT).apply {
+                description = "Notifikasi bila versi baru CloudPix tersedia"
+            },
+        )
         BackupWorker.schedule(this)
+        com.mohdrozaimi.cloudpix.work.Updates.schedule(this)
     }
 
     companion object {
         const val CHANNEL_UPLOAD = "upload"
+        const val CHANNEL_UPDATE = "update"
     }
 }
 

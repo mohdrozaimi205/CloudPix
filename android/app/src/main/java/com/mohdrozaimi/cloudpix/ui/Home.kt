@@ -65,7 +65,7 @@ import kotlinx.coroutines.flow.flowOf
 @Composable
 fun rememberUploadPicker(albumId: String? = null): () -> Unit {
     val ctx = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(200)) { uris: List<Uri> ->
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris: List<Uri> ->
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
         uris.forEach { runCatching { ctx.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION) } }
         UploadWorker.enqueue(ctx, uris, albumId)

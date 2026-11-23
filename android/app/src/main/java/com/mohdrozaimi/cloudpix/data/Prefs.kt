@@ -26,6 +26,14 @@ class Prefs(ctx: Context) {
         get() = sp.getInt("theme", 0)
         set(v) = sp.edit { putInt("theme", v) }
 
+    /** Versi terakhir yang sudah dinotifikasi / ditolak "Nanti" */
+    var notifiedVersion: String
+        get() = sp.getString("notified_version", "") ?: ""
+        set(v) = sp.edit { putString("notified_version", v) }
+    var skippedVersion: String
+        get() = sp.getString("skipped_version", "") ?: ""
+        set(v) = sp.edit { putString("skipped_version", v) }
+
     // ---------- Auto backup ----------
     var backupEnabled: Boolean
         get() = sp.getBoolean("backup_enabled", false)
