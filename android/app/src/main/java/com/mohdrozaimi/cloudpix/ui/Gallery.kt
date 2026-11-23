@@ -144,7 +144,7 @@ fun MediaGridScreen(
                 end = page.size < PAGE_SIZE
             }
         } catch (e: Exception) {
-            error = e.message
+            error = friendlyError(e)
         } finally {
             loading = false
         }
@@ -170,7 +170,7 @@ fun MediaGridScreen(
 
     fun act(block: suspend () -> Unit, ok: String? = null) = scope.launch {
         runCatching { block() }.onSuccess { ok?.let { toast(ctx, it) }; selected.clear(); Graph.bump() }
-            .onFailure { toast(ctx, it.message ?: "Ralat") }
+            .onFailure { toast(ctx, friendlyError(it)) }
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -300,7 +300,7 @@ fun MediaGridScreen(
     if (moving) AlbumPickerDialog(onDismiss = { moving = false }) { albumId ->
         runCatching { Graph.repo.moveToAlbum(sel.map { it.id }, albumId) }
             .onSuccess { toast(ctx, if (albumId != null) "Dipindah ke album" else "Dibuang dari album"); selected.clear() }
-            .onFailure { toast(ctx, it.message ?: "Ralat") }
+            .onFailure { toast(ctx, friendlyError(it)) }
     }
     if (purging) ConfirmDialog(
         "Padam kekal?", "${sel.size} fail akan dipadam selama-lamanya dan ruang storan dibebaskan.", "Padam kekal",

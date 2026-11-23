@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -82,6 +83,7 @@ fun AuroraBackground(modifier: Modifier = Modifier, content: @Composable BoxScop
             .background(Brush.verticalGradient(listOf(g.bgTop, g.bgBottom)))
             .background(Brush.radialGradient(listOf(g.glow1, Color.Transparent), center = Offset(80f, 120f), radius = 1100f))
             .background(Brush.radialGradient(listOf(g.glow2, Color.Transparent), center = Offset(1400f, 2600f), radius = 1300f)),
-        content = content,
-    )
+    ) {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) { content() }
+    }
 }

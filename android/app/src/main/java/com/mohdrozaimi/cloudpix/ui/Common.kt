@@ -327,4 +327,15 @@ fun LaunchOnce(block: suspend () -> Unit) {
 }
 
 fun kotlinx.coroutines.CoroutineScope.launchCatching(ctx: Context, block: suspend () -> Unit) =
-    launch(kotlinx.coroutines.Dispatchers.Main) { runCatching { block() }.onFailure { toast(ctx, it.message ?: "Ralat") } }
+    launch(kotlinx.coroutines.Dispatchers.Main) { runCatching { block() }.onFailure { toast(ctx, friendlyError(it)) } }
+
+/** Mesej ralat ringkas untuk pengguna — jangan papar URL/header/token mentah. */
+fun friendlyError(e: Throwable): String {
+    val t = e.message ?: return "Ralat tidak diketahui"
+    return when {
+        t.contains("schema cache", true) || t.contains("does not exist", true) -> "Database belum dipasang. Ikut panduan pemasangan (SQL Editor)."
+        t.contains("JWT", true) || t.contains("401") -> "Sesi tamat. Sila log keluar dan log masuk semula."
+        t.contains("Unable to resolve host", true) || t.contains("timeout", true) || t.contains("failed to connect", true) -> "Tiada sambungan internet."
+        else -> t.lineSequence().first().take(160)
+    }
+}

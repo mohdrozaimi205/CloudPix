@@ -97,7 +97,7 @@ fun ViewerScreen(onClose: () -> Unit) {
     fun replace(n: Media) { val i = items.indexOfFirst { it.id == n.id }; if (i >= 0) items[i] = n }
     fun removeCurrent() { if (items.size <= 1) onClose() else items.removeAt(pager.currentPage) }
     fun act(block: suspend () -> Unit, ok: String? = null, after: () -> Unit = {}) = scope.launch {
-        runCatching { block() }.onSuccess { ok?.let { toast(ctx, it) }; after(); Graph.bump() }.onFailure { toast(ctx, it.message ?: "Ralat") }
+        runCatching { block() }.onSuccess { ok?.let { toast(ctx, it) }; after(); Graph.bump() }.onFailure { toast(ctx, friendlyError(it)) }
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
