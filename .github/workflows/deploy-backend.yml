@@ -74,8 +74,8 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          PUBLIC_WEB_URL: ${{ vars.PUBLIC_WEB_URL }}
-          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+          PUBLIC_WEB_URL: ${{ vars.PUBLIC_WEB_URL || 'https://mohdrozaimi205.github.io/CloudPix' }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS || 'https://mohdrozaimi205.github.io,https://cloudpix.pages.dev,http://localhost:5173' }}
         run: |
           {
             echo "R2_ACCOUNT_ID=$R2_ACCOUNT_ID"
@@ -86,9 +86,9 @@ jobs:
             [ -n "$PUBLIC_WEB_URL" ] && echo "PUBLIC_WEB_URL=$PUBLIC_WEB_URL"
             [ -n "$ALLOWED_ORIGINS" ] && echo "ALLOWED_ORIGINS=$ALLOWED_ORIGINS"
           } > /tmp/fn.env
-          supabase secrets set --project-ref "$PROJECT_REF" --env-file /tmp/fn.env
+          supabase secrets set --project-ref "$PROJECT_REF" --env-file /tmp/fn.env --yes
           rm -f /tmp/fn.env
 
       - name: Deploy Edge Functions
         working-directory: backend
-        run: supabase functions deploy --project-ref "$PROJECT_REF"
+        run: supabase functions deploy --project-ref "$PROJECT_REF" --yes
