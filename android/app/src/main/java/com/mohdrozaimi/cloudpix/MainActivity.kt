@@ -245,10 +245,16 @@ private fun Main(theme: Int, onTheme: (Int) -> Unit, onServerReset: () -> Unit) 
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
             BottomBar(route) { r ->
-                nav.navigate(r) {
-                    popUpTo("home") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
+                if (r == "home") {
+                    // Utama ialah destinasi permulaan: cukup buang tab lain di atasnya.
+                    // (restoreState pada "home" akan memulihkan tab terakhir — punca Utama tak boleh ditekan)
+                    nav.popBackStack("home", inclusive = false)
+                } else {
+                    nav.navigate(r) {
+                        popUpTo("home") { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             }
         }
